@@ -1,23 +1,271 @@
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-  background: #f5f7fa; color: #1e293b; line-height: 1.6;
+/* ==========================================================================
+   CRM Data Import & Cleaning Tool — Styles
+   ========================================================================== */
+
+/* ---- Reset & Base ---- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
-.container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
-header { text-align: center; margin-bottom: 2rem; }
-header h1 { font-size: 1.75rem; font-weight: 700; color: #0f172a; }
-.subtitle { color: #64748b; font-size: 0.95rem; }
-.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.75rem; margin-bottom: 1.5rem; }
-.btn { display: inline-block; font-size: 0.875rem; font-weight: 600; border: none; border-radius: 6px; padding: 0.6rem 1.25rem; cursor: pointer; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: #2563eb; color: #fff; }
-.btn-secondary { background: #e2e8f0; color: #334155; }
-.drop-zone { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; border: 2px dashed #cbd5e1; border-radius: 10px; padding: 2.5rem 1rem; text-align: center; margin-bottom: 1rem; }
-.drop-zone.drag-over { border-color: #2563eb; background: #eff6ff; }
-.file-name { margin-top: 0.5rem; font-size: 0.85rem; color: #2563eb; }
-#upload-btn { width: 100%; }
-.loader { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 2rem; color: #64748b; }
-[hidden] { display: none !important; }
-.spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.error-box { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.5rem; }
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  background: #f5f7fa;
+  color: #1e293b;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ---- Layout ---- */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* ---- Header ---- */
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* ---- Card ---- */
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.btn-secondary:hover {
+  background: #cbd5e1;
+}
+
+/* ---- Drop Zone ---- */
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 1rem;
+}
+
+.drop-zone.drag-over {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.drop-icon {
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.drop-text {
+  font-weight: 600;
+  color: #334155;
+}
+
+.drop-subtext {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.file-name {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+#upload-btn {
+  width: 100%;
+}
+
+/* ---- Hidden attribute override (flex/grid elements) ---- */
+[hidden] {
+  display: none !important;
+}
+
+/* ---- Loader ---- */
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Error ---- */
+.error-box {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* ---- Summary ---- */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.summary-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+/* ---- Results ---- */
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.results-header h2 {
+  font-size: 1.15rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+thead th {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.35rem;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
