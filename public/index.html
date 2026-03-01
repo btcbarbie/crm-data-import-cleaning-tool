@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM Data Import & Cleaning Tool</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>CRM Data Import &amp; Cleaning Tool</h1>
+      <p class="subtitle">Upload a CSV file with lead data. We'll clean it for you.</p>
+    </header>
+    <section id="upload-section" class="card">
+      <form id="upload-form">
+        <div id="drop-zone" class="drop-zone">
+          <p class="drop-text">Drag &amp; drop your CSV file here</p>
+          <p class="drop-subtext">or</p>
+          <label for="file-input" class="btn btn-secondary">Browse Files</label>
+          <input type="file" id="file-input" name="file" accept=".csv" hidden />
+          <p id="file-name" class="file-name"></p>
+        </div>
+        <button type="submit" id="upload-btn" class="btn btn-primary" disabled>Upload &amp; Clean</button>
+      </form>
+    </section>
+    <div id="loader" class="loader" hidden>
+      <div class="spinner"></div>
+      <p>Processing your file…</p>
+    </div>
+    <div id="error-box" class="error-box" hidden></div>
+  </div>
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileNameEl = document.getElementById('file-name');
+    const uploadBtn = document.getElementById('upload-btn');
+    const uploadForm = document.getElementById('upload-form');
+    const loader = document.getElementById('loader');
+    const errorBox = document.getElementById('error-box');
+    let selectedFile = null;
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) selectFile(fileInput.files[0]);
+    });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-over'); });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) selectFile(e.dataTransfer.files[0]);
+    });
+    function selectFile(file) {
+      if (!file.name.toLowerCase().endsWith('.csv')) { showError('Please select a CSV file.'); return; }
+      selectedFile = file; fileNameEl.textContent = file.name; uploadBtn.disabled = false; hideError();
+    }
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedFile) return;
+      hideError(); loader.hidden = false; uploadBtn.disabled = true;
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Upload failed.');
+        console.log('Cleaned data:', json);
+      } catch (err) { showError(err.message); }
+      finally { loader.hidden = true; uploadBtn.disabled = false; }
+    });
+    function showError(msg) { errorBox.textContent = msg; errorBox.hidden = false; }
+    function hideError() { errorBox.hidden = true; errorBox.textContent = ''; }
+  </script>
+</body>
+</html>
