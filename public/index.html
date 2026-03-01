@@ -3,18 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CRM Data Import & Cleaning Tool</title>
+  <meta name="description" content="Upload messy CRM CSV files, clean them automatically, and download a cleaned version." />
+  <title>CRM Data Import &amp; Cleaning Tool</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
     <header>
       <h1>CRM Data Import &amp; Cleaning Tool</h1>
       <p class="subtitle">Upload a CSV file with lead data. We'll clean it for you.</p>
     </header>
+
+    <!-- Upload Section -->
     <section id="upload-section" class="card">
       <form id="upload-form">
         <div id="drop-zone" class="drop-zone">
+          <svg class="drop-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+          </svg>
           <p class="drop-text">Drag &amp; drop your CSV file here</p>
           <p class="drop-subtext">or</p>
           <label for="file-input" class="btn btn-secondary">Browse Files</label>
@@ -24,51 +31,225 @@
         <button type="submit" id="upload-btn" class="btn btn-primary" disabled>Upload &amp; Clean</button>
       </form>
     </section>
+
+    <!-- Loading -->
     <div id="loader" class="loader" hidden>
       <div class="spinner"></div>
       <p>Processing your file…</p>
     </div>
-    <div id="error-box" class="error-box" hidden></div>
-  </div>
-  <script>
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const fileNameEl = document.getElementById('file-name');
-    const uploadBtn = document.getElementById('upload-btn');
-    const uploadForm = document.getElementById('upload-form');
-    const loader = document.getElementById('loader');
-    const errorBox = document.getElementById('error-box');
-    let selectedFile = null;
 
+    <!-- Error -->
+    <div id="error-box" class="error-box" hidden></div>
+
+    <!-- Summary Section -->
+    <section id="summary-section" class="card" hidden>
+      <h2>Cleaning Summary</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-value" id="total-rows">0</span>
+          <span class="summary-label">Total Rows</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-value" id="duplicates-removed">0</span>
+          <span class="summary-label">Duplicates Removed</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-value" id="invalid-emails">0</span>
+          <span class="summary-label">Invalid Emails</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-value" id="missing-fields">0</span>
+          <span class="summary-label">Missing Required Fields</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Table -->
+    <section id="results-section" class="card" hidden>
+      <div class="results-header">
+        <h2>Cleaned Data</h2>
+        <button id="download-btn" class="btn btn-primary">Download CSV</button>
+      </div>
+      <div class="table-wrapper">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Company</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // -----------------------------------------------------------------------
+    // DOM references
+    // -----------------------------------------------------------------------
+    const dropZone       = document.getElementById('drop-zone');
+    const fileInput      = document.getElementById('file-input');
+    const fileNameEl     = document.getElementById('file-name');
+    const uploadBtn      = document.getElementById('upload-btn');
+    const uploadForm     = document.getElementById('upload-form');
+    const loader         = document.getElementById('loader');
+    const errorBox       = document.getElementById('error-box');
+    const summarySection = document.getElementById('summary-section');
+    const resultsSection = document.getElementById('results-section');
+    const resultsBody    = document.getElementById('results-body');
+    const downloadBtn    = document.getElementById('download-btn');
+
+    let selectedFile  = null;
+    let cleanedData   = [];
+
+    // -----------------------------------------------------------------------
+    // File selection — input + drag-and-drop
+    // -----------------------------------------------------------------------
     fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) selectFile(fileInput.files[0]);
+      if (fileInput.files.length) {
+        selectFile(fileInput.files[0]);
+      }
     });
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('drag-over'); });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
     dropZone.addEventListener('drop', (e) => {
-      e.preventDefault(); dropZone.classList.remove('drag-over');
-      if (e.dataTransfer.files.length) selectFile(e.dataTransfer.files[0]);
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) {
+        selectFile(e.dataTransfer.files[0]);
+      }
     });
+
     function selectFile(file) {
-      if (!file.name.toLowerCase().endsWith('.csv')) { showError('Please select a CSV file.'); return; }
-      selectedFile = file; fileNameEl.textContent = file.name; uploadBtn.disabled = false; hideError();
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        showError('Please select a CSV file.');
+        return;
+      }
+      selectedFile = file;
+      fileNameEl.textContent = file.name;
+      uploadBtn.disabled = false;
+      hideError();
     }
+
+    // -----------------------------------------------------------------------
+    // Upload
+    // -----------------------------------------------------------------------
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!selectedFile) return;
-      hideError(); loader.hidden = false; uploadBtn.disabled = true;
+
+      hideError();
+      summarySection.hidden = true;
+      resultsSection.hidden = true;
+      loader.hidden = false;
+      uploadBtn.disabled = true;
+
       const formData = new FormData();
       formData.append('file', selectedFile);
+
       try {
-        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const res  = await fetch('/api/upload', { method: 'POST', body: formData });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Upload failed.');
-        console.log('Cleaned data:', json);
-      } catch (err) { showError(err.message); }
-      finally { loader.hidden = true; uploadBtn.disabled = false; }
+
+        if (!res.ok) {
+          throw new Error(json.error || 'Upload failed.');
+        }
+
+        renderSummary(json.summary);
+        renderTable(json.cleaned);
+        cleanedData = json.cleaned;
+
+        summarySection.hidden = false;
+        resultsSection.hidden = false;
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        loader.hidden = true;
+        uploadBtn.disabled = false;
+      }
     });
-    function showError(msg) { errorBox.textContent = msg; errorBox.hidden = false; }
-    function hideError() { errorBox.hidden = true; errorBox.textContent = ''; }
+
+    // -----------------------------------------------------------------------
+    // Render helpers
+    // -----------------------------------------------------------------------
+    function renderSummary(summary) {
+      document.getElementById('total-rows').textContent        = summary.totalRows;
+      document.getElementById('duplicates-removed').textContent = summary.duplicatesRemoved;
+      document.getElementById('invalid-emails').textContent     = summary.invalidEmails;
+      document.getElementById('missing-fields').textContent     = summary.missingFields;
+    }
+
+    function renderTable(rows) {
+      resultsBody.innerHTML = '';
+      rows.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${escapeHtml(row.Name  || '')}</td>
+          <td>${escapeHtml(row.Email || '')}</td>
+          <td>${escapeHtml(row.Phone || '')}</td>
+          <td>${escapeHtml(row.Company || '')}</td>
+        `;
+        resultsBody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    // -----------------------------------------------------------------------
+    // Download cleaned CSV
+    // -----------------------------------------------------------------------
+    downloadBtn.addEventListener('click', () => {
+      if (!cleanedData.length) return;
+
+      const headers = ['Name', 'Email', 'Phone', 'Company'];
+      const csvRows = [headers.join(',')];
+
+      for (const row of cleanedData) {
+        const values = headers.map((h) => {
+          const val = (row[h] || '').replace(/"/g, '""');
+          return `"${val}"`;
+        });
+        csvRows.push(values.join(','));
+      }
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'cleaned_crm_data.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // -----------------------------------------------------------------------
+    // Error handling
+    // -----------------------------------------------------------------------
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.hidden = false;
+    }
+
+    function hideError() {
+      errorBox.hidden = true;
+      errorBox.textContent = '';
+    }
   </script>
 </body>
 </html>
