@@ -1,0 +1,10 @@
+{
+  "name": "crm-data-import-cleaning-tool",
+  "version": "1.0.0",
+  "description": "CRM Data Import & Cleaning Tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}
